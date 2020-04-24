@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-pending-killer
+  namespace: kuberhealthy
+  labels:
+    app: k8s-pending-killer
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: k8s-pending-killer
+  template:
+    metadata:
+      labels:
+        app: k8s-pending-killer
+    spec:
+      serviceAccountName: k8s-pending-killer-sa
+      automountServiceAccountToken: true
+      containers:
+      - image: jonnydawg/k8s-pending-killer:v0.0.7
+        ports:
+        - containerPort: 8080
+          name: http
+        imagePullPolicy: IfNotPresent
+        name: k8s-pending-killer
+        resources:
+          requests:
+            cpu: 30m
+            memory: 50Mi
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: k8s-pending-killer-rb
+  namespace: kuberhealthy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: k8s-pending-killer-role
+subjects:
+  - kind: ServiceAccount
+    name: k8s-pending-killer-sa
+    namespace: kuberhealthy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: k8s-pending-killer-role
+  namespace: kuberhealthy
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+      - delete
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-pending-killer-sa
+  namespace: kuberhealthy
