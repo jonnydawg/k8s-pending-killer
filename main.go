@@ -6,6 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -40,6 +41,10 @@ func main() {
 					continue
 				}
 				if v != "kuberhealthy-check" {
+					continue
+				}
+
+				if pod.Status.Phase != corev1.PodPending {
 					continue
 				}
 
